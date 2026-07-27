@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Class Tools">
+<title>Class Tools Pro — Teshiba</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    min-height: 100vh;
+    color: #fff;
+    padding-bottom: 40px;
+  }
+  header { text-align: center; padding: 28px 16px 12px; }
+  header h1 {
+    font-size: 1.7rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px;
+    background: linear-gradient(90deg, #fff, #e94560);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  header p { font-size: 0.9rem; opacity: 0.6; }
+  .badge {
+    display: inline-block; background: linear-gradient(135deg, #e94560, #c73e54);
+    color: #fff; font-size: 0.65rem; font-weight: 700; padding: 3px 10px;
+    border-radius: 12px; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .controls {
+    display: flex; justify-content: center; gap: 10px;
+    padding: 0 16px 16px; flex-wrap: wrap;
+  }
+  .control-btn {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    color: #fff; padding: 10px 18px; border-radius: 24px; font-size: 0.85rem;
+    cursor: pointer; backdrop-filter: blur(10px); transition: all 0.2s; font-weight: 500;
+  }
+  .control-btn:hover, .control-btn:active {
+    background: rgba(255,255,255,0.18); transform: scale(1.05);
+    border-color: rgba(233,69,96,0.5);
+  }
+  .grid {
+    display: grid; grid-template-columns: 1fr; gap: 12px;
+    padding: 0 16px; max-width: 640px; margin: 0 auto;
+  }
+  .card {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 18px; padding: 18px 20px; display: flex; align-items: center;
+    justify-content: space-between; gap: 14px; cursor: pointer;
+    transition: all 0.25s ease; backdrop-filter: blur(10px);
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: linear-gradient(180deg, #e94560, #ff6b6b);
+    border-radius: 18px 0 0 18px; opacity: 0; transition: opacity 0.2s;
+  }
+  .card:hover::before, .card.playing::before { opacity: 1; }
+  .card:hover { background: rgba(255,255,255,0.12); transform: translateX(4px); border-color: rgba(255,255,255,0.2); }
+  .card:active { transform: scale(0.98); }
+  .card.playing { background: rgba(233, 69, 96, 0.12); border-color: rgba(233, 69, 96, 0.35); }
+  .card.has-audio .audio-dot { display: inline-flex; }
+  .audio-dot { display: none; width: 6px; height: 6px; border-radius: 50%; background: #00d26a; margin-left: 6px; box-shadow: 0 0 6px #00d26a; }
+  .num { font-size: 0.75rem; font-weight: 800; color: #e94560; min-width: 28px; text-align: center; }
+  .phrase-box { flex: 1; }
+  .phrase { font-size: 1.08rem; line-height: 1.4; font-weight: 500; display: flex; align-items: center; flex-wrap: wrap; }
+  .phonetic { font-size: 0.82rem; opacity: 0.45; margin-top: 4px; font-style: italic; }
+  .play-icon {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: linear-gradient(135deg, #e94560, #c73e54);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    transition: transform 0.2s; box-shadow: 0 4px 15px rgba(233,69,96,0.3);
+  }
+  .card.playing .play-icon { animation: pulse 1.2s infinite; background: linear-gradient(135deg, #ff6b6b, #e94560); }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(233,69,96,0.3); }
+    50% { transform: scale(1.08); box-shadow: 0 6px 25px rgba(233,69,96,0.5); }
+  }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(100px); background: rgba(0,0,0,0.88);
+    color: #fff; padding: 12px 24px; border-radius: 30px; font-size: 0.9rem;
+    opacity: 0; transition: all 0.3s ease; pointer-events: none; z-index: 100; white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .install-hint { text-align: center; padding: 16px; font-size: 0.78rem; opacity: 0.4; }
+  .mode-indicator { text-align: center; font-size: 0.7rem; opacity: 0.5; margin-bottom: 8px; letter-spacing: 0.5px; }
+  @media (min-width: 480px) { .grid { grid-template-columns: 1fr 1fr; } header h1 { font-size: 2.1rem; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎓 Class Tools Pro</h1>
+  <p>Club de Conversación Teshiba</p>
+  <div class="badge" id="modeBadge">🎙️ Voz del sistema</div>
+</header>
+
+<div class="mode-indicator" id="modeText">Toca cualquier frase para escucharla</div>
+
+<div class="controls">
+  <button class="control-btn" onclick="speakAll()">▶ Reproducir todas</button>
+  <button class="control-btn" onclick="stopAll()">⏹ Detener</button>
+  <button class="control-btn" onclick="changeRate()">🐢 Velocidad</button>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="install-hint">
+  📲 Para instalar: Chrome/Safari → menú → "Agregar a pantalla de inicio"
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const phrases = [
+  { text: "Would you please repeat that?", phonetic: "[wud yu plis ripít dat?]" },
+  { text: "What is the meaning of that?", phonetic: "[wot iz de míni-ng ov dat?]" },
+  { text: "How do you say that in English?", phonetic: "[haw ru yu say dar in English?]" },
+  { text: "How do you spell that?", phonetic: "[haw du yu spél dat?]" },
+  { text: "Would you please write that down?", phonetic: "[wud yu plis rait dat daun?]" },
+  { text: "Would you please speak slower?", phonetic: "[wud yu plis spíik slóʊər?]" },
+  { text: "May I please go to the bathroom?", phonetic: "[méi ai plís góʊ tu ðə báθruːm?]" },
+  { text: "May I please take this call?", phonetic: "[méi ai plís téik ðɪs kɔːl?]" },
+  { text: "May I please step outside?", phonetic: "[méi ai plís stép aʊt ˈsaɪd?]" },
+  { text: "What is the phonetics of that?", phonetic: "[waris de fonerics of dat]" },
+  { text: "How do you pronounce that?", phonetic: "[haw du yu pronáuns dat]" },
+  { text: "Can you hear me clearly?", phonetic: "[kán yu hìr mi klíer-li?]" },
+  { text: "Let's get started.", phonetic: "[lets get stár-ted]" },
+  { text: "Does anyone have any questions?", phonetic: "[dʌz é-ni-wʌn háv é-ni kwés-chʌns?]" },
+  { text: "That's all for today.", phonetic: "[ðats ól fòr tə déy]" }
+];
+
+let rate = 0.9;
+let speaking = false;
+let audioFiles = {};
+let currentAudio = null;
+
+async function detectAudioFiles() {
+  for (let i = 0; i < phrases.length; i++) {
+    try {
+      const res = await fetch(`audio/phrase_${String(i+1).padStart(2,'0')}.mp3`, { method: 'HEAD' });
+      if (res.ok) audioFiles[i] = `audio/phrase_${String(i+1).padStart(2,'0')}.mp3`;
+    } catch(e) {}
+  }
+  const total = Object.keys(audioFiles).length;
+  if (total === phrases.length) {
+    document.getElementById('modeBadge').textContent = '🤖 Voz de IA (ElevenLabs)';
+    document.getElementById('modeBadge').style.background = 'linear-gradient(135deg, #00d26a, #00a854)';
+    document.getElementById('modeText').textContent = 'Todos los audios de IA cargados — toca para escuchar';
+  } else if (total > 0) {
+    document.getElementById('modeBadge').textContent = `🤖 Mix: ${total}/${phrases.length} IA`;
+    document.getElementById('modeText').textContent = 'Algunas frases tienen voz de IA, otras usan el sistema';
+  }
+  Object.keys(audioFiles).forEach(idx => {
+    const card = document.querySelector(`.card[data-index="${idx}"]`);
+    if (card) card.classList.add('has-audio');
+  });
+}
+
+function createGrid() {
+  const grid = document.getElementById('grid');
+  phrases.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.index = i;
+    card.innerHTML = `
+      <span class="num">${String(i+1).padStart(2,'0')}</span>
+      <div class="phrase-box">
+        <div class="phrase">${p.text}<span class="audio-dot"></span></div>
+        <div class="phonetic">${p.phonetic}</div>
+      </div>
+      <div class="play-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+    `;
+    card.addEventListener('click', () => speakOne(i));
+    grid.appendChild(card);
+  });
+}
+
+function speakOne(index) {
+  stopAll();
+  const cards = document.querySelectorAll('.card');
+  cards.forEach(c => c.classList.remove('playing'));
+  cards[index].classList.add('playing');
+
+  if (audioFiles[index]) {
+    currentAudio = new Audio(audioFiles[index]);
+    currentAudio.playbackRate = rate;
+    currentAudio.onended = () => cards[index].classList.remove('playing');
+    currentAudio.onerror = () => { cards[index].classList.remove('playing'); fallbackSpeak(index); };
+    currentAudio.play();
+    showToast('🔊 ' + phrases[index].text);
+  } else {
+    fallbackSpeak(index);
+  }
+}
+
+function fallbackSpeak(index) {
+  const utter = new SpeechSynthesisUtterance(phrases[index].text);
+  utter.lang = 'en-US'; utter.rate = rate; utter.pitch = 1;
+  const cards = document.querySelectorAll('.card');
+  utter.onend = () => cards[index].classList.remove('playing');
+  utter.onerror = () => cards[index].classList.remove('playing');
+  speechSynthesis.cancel(); speechSynthesis.speak(utter);
+  showToast('🎙️ ' + phrases[index].text);
+}
+
+function speakAll() {
+  stopAll(); speaking = true; let i = 0;
+  function next() {
+    if (!speaking || i >= phrases.length) {
+      document.querySelectorAll('.card').forEach(c => c.classList.remove('playing'));
+      speaking = false; return;
+    }
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(c => c.classList.remove('playing'));
+    cards[i].classList.add('playing');
+    cards[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (audioFiles[i]) {
+      currentAudio = new Audio(audioFiles[i]);
+      currentAudio.playbackRate = rate;
+      currentAudio.onended = () => { i++; next(); };
+      currentAudio.onerror = () => { i++; next(); };
+      currentAudio.play();
+    } else {
+      const utter = new SpeechSynthesisUtterance(phrases[i].text);
+      utter.lang = 'en-US'; utter.rate = rate; utter.pitch = 1;
+      utter.onend = () => { i++; next(); };
+      utter.onerror = () => { i++; next(); };
+      speechSynthesis.speak(utter);
+    }
+  }
+  next();
+}
+
+function stopAll() {
+  speaking = false; speechSynthesis.cancel();
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('playing'));
+}
+
+function changeRate() {
+  const rates = [0.7, 0.9, 1.1, 1.3];
+  const labels = ['🐢 Lenta', '🐌 Normal', '🏃 Rápida', '🚀 Muy rápida'];
+  const nextIdx = (rates.indexOf(rate) + 1) % rates.length;
+  rate = rates[nextIdx];
+  showToast(labels[nextIdx]);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+createGrid(); detectAudioFiles();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
